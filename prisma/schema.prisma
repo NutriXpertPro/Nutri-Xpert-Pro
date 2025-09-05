@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id           Int           @id @default(autoincrement())
+  name         String
+  age          Int
+  sex          String
+  birthDate    DateTime
+  profession   String?
+  email        String        @unique
+  phone        String?
+  anamneses    Anamnesis[]
+  diets        Diet[]
+  createdAt    DateTime      @default(now())
+}
+
+model Anamnesis {
+  id          Int        @id @default(autoincrement())
+  clientId    Int
+  date        DateTime   @default(now())
+  routine     Json
+  nutrition   Json
+  health      Json
+  goals       Json
+  measures    Measure?
+  photos      Photo[]
+  Client      Client     @relation(fields: [clientId], references: [id])
+}
+
+model Measure {
+  id         Int       @id @default(autoincrement())
+  anamnesisId Int      @unique
+  neck       Float
+  waist      Float
+  hip        Float?
+  weight     Float
+  height     Float
+  Anamnesis  Anamnesis @relation(fields: [anamnesisId], references: [id])
+}
+
+model Photo {
+  id          Int        @id @default(autoincrement())
+  anamnesisId Int
+  type        String // frente, lado, costas
+  url         String
+  Anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
+}
+
+model Food {
+  id       Int    @id @default(autoincrement())
+  name     String
+  macros   Json   // {calories, protein, carbs, fat}
+  category String
+}
+
+model Supplement {
+  id         Int    @id @default(autoincrement())
+  name       String
+  description String
+  dosage     String
+  indications String
+}
+
+model Diet {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  plan      Json     // estrutura com refeições, substituições, cálculos
+  createdAt DateTime @default(now())
+  Client    Client   @relation(fields: [clientId], references: [id])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("nutritionist")
+  createdAt DateTime @default(now())
+}
