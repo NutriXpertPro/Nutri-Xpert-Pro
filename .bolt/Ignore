@@ -1,0 +1,7 @@
+node_modules/
+dist/
+migrations/
+.replit
+replit.nix
+*.log
+*.db
