@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Users, FileText, PieChart, Utensils, Settings, Activity } from "lucide-react";
-import ToggleTheme from "@/components/ui/toggle-theme";
+// Theme toggle será implementado depois
 
 export default function Dashboard() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nutri Xpert Pro</h1>
           <div className="flex items-center space-x-4">
-            <ToggleTheme />
+            {/* Theme toggle será adicionado depois */}
           </div>
         </div>
       </div>
