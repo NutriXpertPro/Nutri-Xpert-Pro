@@ -1,13 +1,29 @@
-import { pgTable, text, timestamp, integer, real, varchar, json, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, real, varchar, json, uuid, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table
+// Users table (adaptado para NextAuth)
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
+  name: text("name"),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  image: text("image"), // Para fotos do OAuth
+  role: text("role").default("client").notNull(), // client, nutritionist
+  emailVerified: timestamp("email_verified"), // Para NextAuth
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Clients table - clientes dos nutricionistas
+export const clients = pgTable("clients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  birthDate: timestamp("birth_date"),
+  proId: uuid("pro_id").references(() => users.id).notNull(), // FK para o nutricionista
+  notes: text("notes"), // Observações gerais
+  active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -74,6 +90,9 @@ export const anamnesis = pgTable("anamnesis", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = typeof clients.$inferInsert;
+
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = typeof userProfiles.$inferInsert;
 
@@ -92,8 +111,35 @@ export type InsertAnamnesis = typeof anamnesis.$inferInsert;
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
+  role: z.enum(["nutritionist", "client"]).optional(),
+});
+
+// Schema seguro para criação - apenas campos permitidos
+export const createClientSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  birthDate: z.coerce.date().optional(),
+  notes: z.string().optional(),
+});
+
+// Schema seguro para atualização - apenas campos editáveis
+export const updateClientSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  birthDate: z.coerce.date().optional(),
+  notes: z.string().optional(),
+});
+
+// Manter o schema original para compatibilidade
+export const insertClientSchema = createInsertSchema(clients, {
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido").optional(),
+  phone: z.string().optional(),
+  birthDate: z.coerce.date().optional(),
+  notes: z.string().optional(),
 });
 
 export const insertUserProfileSchema = createInsertSchema(userProfiles, {
@@ -150,6 +196,7 @@ export const insertAnamnesisSchema = createInsertSchema(anamnesis, {
 });
 
 export const selectUserSchema = createSelectSchema(users);
+export const selectClientSchema = createSelectSchema(clients);
 export const selectUserProfileSchema = createSelectSchema(userProfiles);
 export const selectWeightEntrySchema = createSelectSchema(weightEntries);
 export const selectNutritionCalculationSchema = createSelectSchema(nutritionCalculations);
