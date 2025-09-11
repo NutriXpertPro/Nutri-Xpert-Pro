@@ -1,6 +1,6 @@
 import "./styles/globals.css";  // Importando os estilos globais
 import React from "react";  // Importando React
-import ThemeProvider from "./components/ThemeProvider"; // Componente para gerenciar tema
+import Providers from "./providers"; // Provider que inclui Theme e NextAuth
 
 // Exportação do metadata para SEO e informações globais
 export const metadata = {
@@ -33,9 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#00bcd4" />
       </head>
       <body className="h-full overflow-hidden">
-        <ThemeProvider>
+        <Providers>
           {children}
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
