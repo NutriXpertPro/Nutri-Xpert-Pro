@@ -1,85 +1,82 @@
-# Overview
+# NutriXpert Pro - Professional Nutrition Management System
 
-Nutri Xpert Pro is a comprehensive nutritional management system designed for professional nutritionists. The application provides tools for client management, health assessments (anamnesis), dietary planning, food and supplement databases, and progress tracking. Built with a modern full-stack architecture, it features a React-based frontend with TypeScript, an Express.js backend, and PostgreSQL database integration through Drizzle ORM.
+## Overview
 
-# User Preferences
+NutriXpert Pro is a comprehensive web application designed for nutrition professionals to manage clients, conduct anamneses (health assessments), create meal plans, and track nutritional data. The system provides tools for calculating BMR (Basal Metabolic Rate), TDEE (Total Daily Energy Expenditure), body composition analysis, and comprehensive client management. Built as a Progressive Web Application (PWA), it offers both online and offline functionality for nutrition professionals.
+
+## User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-# System Architecture
+## System Architecture
 
-## Frontend Architecture
-The client-side application is built using React 18 with TypeScript, utilizing a component-based architecture with shadcn/ui for the design system. The application follows a single-page application (SPA) pattern with client-side routing handled by Wouter. The UI framework is built on top of Radix UI primitives and styled with Tailwind CSS, providing a responsive and accessible interface.
+### Frontend Architecture
+- **Framework**: Next.js 15 with App Router architecture
+- **Styling**: Tailwind CSS with custom design system and dark/light theme support
+- **UI Components**: Radix UI primitives with custom shadcn/ui components
+- **State Management**: React hooks and local state with React Query for server state
+- **PWA Support**: Configured with service worker, manifest, and offline capabilities
+- **Theme System**: Dynamic theme switching with localStorage persistence and system preference detection
 
-Key architectural decisions:
-- **React Query (TanStack Query)** for server state management and caching
-- **React Hook Form** with Zod validation for form handling
-- **Wouter** for lightweight client-side routing
-- **shadcn/ui** component library for consistent design patterns
+### Backend Architecture
+- **Runtime**: Node.js with Express.js server
+- **Database ORM**: Drizzle ORM for type-safe database operations
+- **Database**: PostgreSQL with Neon serverless hosting
+- **Authentication**: JWT-based authentication with bcrypt password hashing
+- **API Design**: RESTful API endpoints for user management, profiles, weight tracking, and nutrition calculations
+- **Data Validation**: Zod schemas for runtime type checking and validation
 
-## Backend Architecture
-The server is implemented using Express.js with TypeScript, following a RESTful API design pattern. The application uses a modular structure separating concerns between routing, data access, and business logic.
+### Database Schema Design
+The system uses a normalized relational database structure with the following core entities:
+- **Users**: Basic authentication and user information
+- **User Profiles**: Extended user data including age, gender, height, activity level, and goals
+- **Weight Entries**: Time-series weight tracking with notes
+- **Nutrition Calculations**: Storage for BMR, TDEE, and body composition calculations
+- **Meal Plans**: Structured meal planning with ingredients, calories, and categorization
 
-Core components:
-- **Express.js** server with middleware for JSON parsing and request logging
-- **Storage abstraction layer** providing a clean interface for data operations
-- **Centralized error handling** with standardized API responses
-- **Vite integration** for development with hot module replacement
+### Progressive Web App Features
+- **Offline Functionality**: Service worker with caching strategies for static assets and dynamic content
+- **Installation**: Web app manifest for native app-like installation
+- **Performance**: Network-first for APIs, cache-first for static assets, and stale-while-revalidate for pages
+- **Mobile Optimization**: Responsive design with touch-friendly interfaces
 
-## Data Storage Solutions
-The application uses PostgreSQL as the primary database, accessed through Drizzle ORM for type-safe database operations. The database schema supports the complete nutritional management workflow.
+### Authentication & Security
+- **Password Security**: bcrypt hashing with salt rounds
+- **Session Management**: JWT tokens with 7-day expiration
+- **Route Protection**: Middleware-based authentication checking
+- **Default Admin**: Automatic admin user creation for initial setup
 
-Database design features:
-- **Neon Database** as the PostgreSQL provider with serverless connection pooling
-- **Drizzle ORM** with schema-first approach and automatic TypeScript type generation
-- **Zod integration** for runtime validation matching database schemas
-- **Migration system** for database version control
+## External Dependencies
 
-Key entities include:
-- Users (nutritionists)
-- Clients with comprehensive profile data
-- Anamnesis records for health assessments
-- Measurements and photos for progress tracking
-- Food and supplement databases
-- Diet plans with meal composition
-- Evaluation scheduling and tracking
+### Database & ORM
+- **Neon Database**: Serverless PostgreSQL hosting for production
+- **Drizzle ORM**: Type-safe database queries and migrations
+- **Drizzle Kit**: Database migration and schema management tools
 
-## Authentication and Authorization
-The current implementation uses a simplified authentication approach with session-based user identification. The system is designed to support role-based access control for nutritionist-client relationships.
+### UI & Styling
+- **Radix UI**: Accessible component primitives for dialog, dropdown, accordion, and form controls
+- **Tailwind CSS**: Utility-first CSS framework with custom configuration
+- **Lucide React**: Modern icon library for consistent iconography
+- **Class Variance Authority**: Type-safe component variant management
 
-## Progressive Web App (PWA) Features
-The application is configured as a Progressive Web App with:
-- **Service Worker** for offline functionality and caching
-- **Web App Manifest** for native app-like installation
-- **Responsive design** optimized for mobile and desktop usage
+### Development & Build Tools
+- **TypeScript**: Full type safety across the application
+- **PostCSS**: CSS processing with Autoprefixer
+- **Next PWA**: Progressive Web App configuration and service worker generation
 
-# External Dependencies
+### Server & API
+- **Express.js**: Backend API server for custom endpoints
+- **Axios**: HTTP client for API communications
+- **WebSocket (ws)**: Real-time communication capabilities
+- **Concurrently**: Development script coordination
 
-## Database and Infrastructure
-- **@neondatabase/serverless**: PostgreSQL database connection with serverless architecture
-- **Drizzle ORM**: Type-safe database access layer with PostgreSQL dialect
-- **connect-pg-simple**: PostgreSQL session store for Express sessions
-
-## Frontend Libraries
-- **React ecosystem**: React 18, React DOM, React Query for state management
-- **Routing**: Wouter for lightweight client-side routing
-- **Forms**: React Hook Form with Hookform Resolvers for validation
-- **UI Components**: Radix UI primitives for accessible component foundation
-- **Styling**: Tailwind CSS with class-variance-authority for component variants
-
-## Development and Build Tools
-- **Vite**: Build tool and development server with React plugin
-- **TypeScript**: Type system for both frontend and backend
-- **ESBuild**: Fast JavaScript bundler for production builds
-- **Replit integrations**: Development environment specific plugins and error handling
-
-## Validation and Data Handling
+### Form & Data Management
+- **React Hook Form**: Performant form handling with validation
 - **Zod**: Runtime type validation and schema definition
-- **Drizzle-Zod**: Integration layer between Drizzle schemas and Zod validation
 - **Date-fns**: Date manipulation and formatting utilities
+- **TanStack Query**: Server state management and caching
 
-## Utility Libraries
-- **Clsx**: Conditional className composition
-- **Tailwind Merge**: Intelligent Tailwind class merging
-- **Nanoid**: Unique ID generation
-- **Lucide React**: Icon library with React components
+### Security & Authentication
+- **JSON Web Tokens**: Stateless authentication tokens
+- **bcrypt**: Password hashing and verification
+- **Input Validation**: Comprehensive data sanitization and validation

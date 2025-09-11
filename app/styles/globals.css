@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset e configuração global */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Para o modo claro - Background puro sem película */
+body {
+  background-image: url('/assets/background-light.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  transition: background-image 0.3s ease;
+  margin: 0;
+  padding: 0;
+}
+
+/* Para o modo escuro - Background puro sem película */
+body.dark {
+  background-image: url('/assets/background.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Estilos para textos no modo escuro */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #ffffff;
+}
+
+.dark p, .dark span, .dark div {
+  color: #e5e5e5;
+}
+
+/* Container principal que ocupa toda viewport */
+.viewport-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Área de conteúdo com scroll interno se necessário */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Transições suaves */
+.theme-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scroll customizado */
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.dark .content-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Ajuste do texto em uma linha */
+.single-line-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
