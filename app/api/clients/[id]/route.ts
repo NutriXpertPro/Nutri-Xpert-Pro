@@ -1,5 +1,6 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthSession } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 import { db } from '@/lib/db';
 import { clients, users, updateClientSchema } from '@/shared/schema';
 import { eq, and } from 'drizzle-orm';
@@ -7,6 +8,10 @@ import { ZodError } from 'zod';
 
 interface RouteParams {
   params: { id: string }
+}
+
+async function getAuthSession() {
+  return await getServerSession();
 }
 
 // GET /api/clients/[id] - Buscar cliente específico
@@ -47,7 +52,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .from(clients)
       .where(and(
         eq(clients.id, params.id),
-        eq(clients.proId, userResult[0].id)
+        eq(clients.proId, userResult[0].id),
+        eq(clients.active, true)
       ))
       .limit(1);
 
