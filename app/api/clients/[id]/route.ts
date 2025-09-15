@@ -1,18 +1,23 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { db } from '@/lib/db';
-import { clients, users, updateClientSchema } from '@/shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { ZodError } from 'zod';
+import { getAuthSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
 interface RouteParams {
   params: { id: string }
 }
 
-async function getAuthSession() {
-  return await getServerSession();
-}
+const updateClientSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório").optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  age: z.number().min(1).max(120).optional(),
+  sex: z.enum(["Masculino", "Feminino"]).optional(),
+  profession: z.string().optional(),
+  notes: z.string().optional(),
+  evaluationType: z.enum(["virtual", "presencial"]).optional(),
+});
 
 // GET /api/clients/[id] - Buscar cliente específico
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -26,13 +31,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Buscar o ID do usuário pela sessão
-    const userResult = await db.select()
-      .from(users)
-      .where(eq(users.email, session.user.email!))
-      .limit(1);
+    // Buscar usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!userResult[0]) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
@@ -40,24 +44,47 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verificar role
-    if (userResult[0].role !== 'nutritionist') {
+    if (user.role !== 'nutritionist') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas nutricionistas podem gerenciar clientes.' },
         { status: 403 }
       );
     }
 
-    // Buscar cliente específico (verificando ownership)
-    const clientResult = await db.select()
-      .from(clients)
-      .where(and(
-        eq(clients.id, params.id),
-        eq(clients.proId, userResult[0].id),
-        eq(clients.active, true)
-      ))
-      .limit(1);
-
-    const client = clientResult[0];
+    // Buscar cliente com dados relacionados
+    const client = await prisma.client.findFirst({
+      where: {
+        id: params.id,
+        nutritionistId: user.id,
+        active: true
+      },
+      include: {
+        anamnesis: {
+          include: {
+            photos: true
+          }
+        },
+        evaluations: {
+          include: {
+            photos: true
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        },
+        diets: {
+          where: { active: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        },
+        _count: {
+          select: {
+            evaluations: {
+              where: { status: 'pending' }
+            }
+          }
+        }
+      }
+    });
 
     if (!client) {
       return NextResponse.json(
@@ -89,13 +116,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Buscar o ID do usuário pela sessão
-    const userResult = await db.select()
-      .from(users)
-      .where(eq(users.email, session.user.email!))
-      .limit(1);
+    // Buscar usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!userResult[0]) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
@@ -103,7 +129,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verificar role
-    if (userResult[0].role !== 'nutritionist') {
+    if (user.role !== 'nutritionist') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas nutricionistas podem gerenciar clientes.' },
         { status: 403 }
@@ -112,27 +138,48 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json();
     
-    // Validar APENAS campos seguros para edição
+    // Validar dados
     const validatedData = updateClientSchema.parse(body);
 
-    // Atualizar cliente (verificando ownership)
-    const [updatedClient] = await db.update(clients)
-      .set({
-        ...validatedData,
-        updatedAt: new Date()
-      })
-      .where(and(
-        eq(clients.id, params.id),
-        eq(clients.proId, userResult[0].id)
-      ))
-      .returning();
+    // Verificar se cliente existe e pertence ao usuário
+    const existingClient = await prisma.client.findFirst({
+      where: {
+        id: params.id,
+        nutritionistId: user.id
+      }
+    });
 
-    if (!updatedClient) {
+    if (!existingClient) {
       return NextResponse.json(
         { error: 'Cliente não encontrado' },
         { status: 404 }
       );
     }
+
+    // Verificar email único (se alterado)
+    if (validatedData.email && validatedData.email !== existingClient.email) {
+      const emailExists = await prisma.client.findFirst({
+        where: {
+          email: validatedData.email,
+          nutritionistId: user.id,
+          active: true,
+          id: { not: params.id }
+        }
+      });
+
+      if (emailExists) {
+        return NextResponse.json(
+          { error: 'Já existe um cliente com este email' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Atualizar cliente
+    const updatedClient = await prisma.client.update({
+      where: { id: params.id },
+      data: validatedData
+    });
 
     return NextResponse.json(
       { client: updatedClient, message: 'Cliente atualizado com sucesso' }
@@ -141,8 +188,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
     
-    // Tratamento correto de ZodError
-    if (error instanceof ZodError) {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
         { 
           error: 'Dados inválidos', 
@@ -174,13 +220,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Buscar o ID do usuário pela sessão
-    const userResult = await db.select()
-      .from(users)
-      .where(eq(users.email, session.user.email!))
-      .limit(1);
+    // Buscar usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!userResult[0]) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
@@ -188,26 +233,25 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verificar role
-    if (userResult[0].role !== 'nutritionist') {
+    if (user.role !== 'nutritionist') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas nutricionistas podem gerenciar clientes.' },
         { status: 403 }
       );
     }
 
-    // Soft delete - marcar como inativo em vez de deletar
-    const [deletedClient] = await db.update(clients)
-      .set({ 
-        active: false,
-        updatedAt: new Date()
-      })
-      .where(and(
-        eq(clients.id, params.id),
-        eq(clients.proId, userResult[0].id)
-      ))
-      .returning();
+    // Soft delete - marcar como inativo
+    const deletedClient = await prisma.client.updateMany({
+      where: {
+        id: params.id,
+        nutritionistId: user.id
+      },
+      data: { 
+        active: false
+      }
+    });
 
-    if (!deletedClient) {
+    if (deletedClient.count === 0) {
       return NextResponse.json(
         { error: 'Cliente não encontrado' },
         { status: 404 }

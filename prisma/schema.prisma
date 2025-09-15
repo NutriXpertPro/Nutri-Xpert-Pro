@@ -1,5 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,80 +8,296 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
-  id           Int           @id @default(autoincrement())
-  name         String
-  age          Int
-  sex          String
-  birthDate    DateTime
-  profession   String?
-  email        String        @unique
-  phone        String?
-  anamneses    Anamnesis[]
-  diets        Diet[]
-  createdAt    DateTime      @default(now())
-}
-
-model Anamnesis {
-  id          Int        @id @default(autoincrement())
-  clientId    Int
-  date        DateTime   @default(now())
-  routine     Json
-  nutrition   Json
-  health      Json
-  goals       Json
-  measures    Measure?
-  photos      Photo[]
-  Client      Client     @relation(fields: [clientId], references: [id])
-}
-
-model Measure {
-  id         Int       @id @default(autoincrement())
-  anamnesisId Int      @unique
-  neck       Float
-  waist      Float
-  hip        Float?
-  weight     Float
-  height     Float
-  Anamnesis  Anamnesis @relation(fields: [anamnesisId], references: [id])
-}
-
-model Photo {
-  id          Int        @id @default(autoincrement())
-  anamnesisId Int
-  type        String // frente, lado, costas
-  url         String
-  Anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
-}
-
-model Food {
-  id       Int    @id @default(autoincrement())
-  name     String
-  macros   Json   // {calories, protein, carbs, fat}
-  category String
-}
-
-model Supplement {
-  id         Int    @id @default(autoincrement())
-  name       String
-  description String
-  dosage     String
-  indications String
-}
-
-model Diet {
-  id        Int      @id @default(autoincrement())
-  clientId  Int
-  plan      Json     // estrutura com refeições, substituições, cálculos
-  createdAt DateTime @default(now())
-  Client    Client   @relation(fields: [clientId], references: [id])
-}
-
+// Usuários (nutricionistas e clientes)
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("nutritionist")
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  image         String?   // Para OAuth
+  role          String    @default("client") // client, nutritionist
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relacionamentos
+  clients       Client[]       @relation("NutritionistClients")
+  notifications Notification[]
+  diets         Diet[]
+  mealPlans     MealPlan[]
+  reports       Report[]
+
+  @@map("users")
+}
+
+// Clientes dos nutricionistas
+model Client {
+  id                  String    @id @default(uuid())
+  name                String
+  email               String?
+  phone               String?
+  birthDate           DateTime?
+  age                 Int?
+  sex                 String?   // Masculino, Feminino
+  profession          String?
+  notes               String?   // Observações gerais
+  active              Boolean   @default(true)
+  evaluationType      String    @default("virtual") // virtual, presencial
+  nextEvaluationDate  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // FK para o nutricionista
+  nutritionistId String
+  nutritionist   User   @relation("NutritionistClients", fields: [nutritionistId], references: [id])
+
+  // Relacionamentos
+  anamnesis     Anamnesis[]
+  evaluations   Evaluation[]
+  diets         Diet[]
+  notifications Notification[]
+  reports       Report[]
+
+  @@map("clients")
+}
+
+// Anamnese inicial completa
+model Anamnesis {
+  id       String   @id @default(uuid())
+  clientId String   @unique
+  client   Client   @relation(fields: [clientId], references: [id])
+  
+  // Identificação (já vem do cliente)
+  
+  // Rotina
+  wakeTime            String?
+  sleepTime           String?
+  sleepDifficulty     String?
+  trainTime           String?
+  trainDuration       Int?
+  trainDays           String?
+  
+  // Antropometria inicial
+  weight              Float?
+  height              Float?
+  weightTrend         String?
+  
+  // Nutrição e Hábitos
+  restrictedFoods     String?
+  previousDiet        String?
+  dietResult          String?
+  intestineFunction   String?
+  daysWithoutBathroom Int?
+  bathroomFrequency   Int?
+  waterIntake         Float?
+  sweetCravings       Int?      @default(5)
+  hungerTimes         String?
+  snackPreference     String?
+  favoriteFruits      String?
+  
+  // Histórico de Saúde
+  familyHistory           String?
+  healthProblems          String?
+  healthProblemsDetails   String?
+  jointProblems           String?
+  medications             String?
+  medicationsDetails      String?
+  smoking                 String?
+  medicationIntolerance   String?
+  intoleranceDetails      String?
+  contraceptive           String?
+  thermogenics            String?
+  alcohol                 String?
+  alcoholFrequency        Int?
+  anabolics               String?
+  anabolicsProblems       String?
+  futureAnabolics         String?
+  
+  // Objetivos
+  goal       String?
+  commitment String?
+  
+  // Medidas iniciais
+  neck  Float?
+  waist Float?
+  hip   Float?
+  
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  photos Photo[]
+
+  @@map("anamnesis")
+}
+
+// Avaliações quinzenais
+model Evaluation {
+  id       String   @id @default(uuid())
+  clientId String
+  client   Client   @relation(fields: [clientId], references: [id])
+  
+  // Dados da avaliação
+  weight Float?
+  neck   Float?
+  waist  Float?
+  hip    Float?
+  
+  // Tipo e status
+  type         String  @default("quinzenal") // quinzenal, presencial
+  status       String  @default("pending")   // pending, completed, overdue
+  dueDate      DateTime
+  completedAt  DateTime?
+  notes        String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  photos Photo[]
+
+  @@map("evaluations")
+}
+
+// Fotos das avaliações
+model Photo {
+  id   String @id @default(uuid())
+  type String // frente, lado, costas
+  url  String
+  
+  // Pode pertencer à anamnese inicial OU avaliação
+  anamnesisId  String?
+  anamnesis    Anamnesis? @relation(fields: [anamnesisId], references: [id])
+  evaluationId String?
+  evaluation   Evaluation? @relation(fields: [evaluationId], references: [id])
+  
+  createdAt DateTime @default(now())
+
+  @@map("photos")
+}
+
+// Tabela TACO - Alimentos
+model Food {
+  id   String @id @default(uuid())
+  name String
+  category String
+  
+  // Macronutrientes por 100g
+  calories      Float?
+  protein       Float?
+  carbohydrates Float?
+  fat           Float?
+  fiber         Float?
+  sodium        Float?
+  
+  // Micronutrientes
+  calcium    Float?
+  iron       Float?
+  magnesium  Float?
+  phosphorus Float?
+  potassium  Float?
+  zinc       Float?
+  
+  // Vitaminas
+  vitaminA  Float?
+  vitaminB1 Float?
+  vitaminB2 Float?
+  vitaminB3 Float?
+  vitaminB6 Float?
+  vitaminB12 Float?
+  vitaminC  Float?
+  vitaminD  Float?
+  vitaminE  Float?
+  folate    Float?
+  
+  active    Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("foods")
+}
+
+// Dietas personalizadas
+model Diet {
+  id             String @id @default(uuid())
+  clientId       String
+  client         Client @relation(fields: [clientId], references: [id])
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+  
+  name         String
+  description  String?
+  totalCalories Float?
+  totalProtein  Float?
+  totalCarbs    Float?
+  totalFat      Float?
+  
+  // JSON com estrutura das refeições e substituições
+  mealStructure Json?
+  
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("diets")
+}
+
+// Planos de refeições (templates)
+model MealPlan {
+  id             String @id @default(uuid())
+  nutritionistId String?
+  nutritionist   User?  @relation(fields: [nutritionistId], references: [id])
+  
+  name        String
+  description String?
+  mealType    String // breakfast, lunch, dinner, snack
+  calories    Float?
+  protein     Float?
+  carbs       Float?
+  fat         Float?
+  
+  // JSON com ingredientes e instruções
+  ingredients  Json?
+  instructions String?
+  tags         Json?
+  
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("meal_plans")
+}
+
+// Sistema de notificações
+model Notification {
+  id             String @id @default(uuid())
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+  clientId       String?
+  client         Client? @relation(fields: [clientId], references: [id])
+  
+  type      String // evaluation_overdue, evaluation_due, diet_created
+  title     String
+  message   String
+  read      Boolean @default(false)
+  actionUrl String?
+  
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// Relatórios gerados
+model Report {
+  id             String @id @default(uuid())
+  clientId       String
+  client         Client @relation(fields: [clientId], references: [id])
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+  
+  type      String // evolution, diet, complete
+  title     String
+  content   Json?
+  pdfUrl    String?
+  
+  generatedAt DateTime @default(now())
+
+  @@map("reports")
 }

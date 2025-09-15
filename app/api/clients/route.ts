@@ -1,11 +1,22 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { clients, users, createClientSchema } from '@/shared/schema';
-import { eq, desc, and } from 'drizzle-orm';
-import { ZodError } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
-// GET /api/clients - Listar clientes ATIVOS do usuário autenticado com paginação
+const createClientSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  age: z.number().min(1).max(120).optional(),
+  sex: z.enum(["Masculino", "Feminino"]).optional(),
+  profession: z.string().optional(),
+  notes: z.string().optional(),
+  evaluationType: z.enum(["virtual", "presencial"]).default("virtual"),
+  birthDate: z.date().optional(),
+});
+
+// GET /api/clients - Listar clientes do nutricionista
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthSession();
@@ -17,26 +28,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar ou criar usuário automaticamente (OAuth)
-    let userResult = await db.select()
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
+    // Buscar usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!userResult[0]) {
-      // Criar usuário automaticamente para OAuth
-      const [newUser] = await db.insert(users).values({
-        email: session.user.email,
-        name: session.user.name || null,
-        image: session.user.image || null,
-        role: 'client', // Default seguro - precisa ser promovido para nutritionist
-        emailVerified: new Date()
-      }).returning();
-      userResult = [newUser];
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      );
     }
 
     // Verificar role
-    if (userResult[0].role !== 'nutritionist') {
+    if (user.role !== 'nutritionist') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas nutricionistas podem gerenciar clientes.' },
         { status: 403 }
@@ -47,22 +52,42 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(10, parseInt(searchParams.get('limit') || '20')));
-    const offset = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    // Buscar clientes ATIVOS do usuário com paginação
-    const userClients = await db.select()
-      .from(clients)
-      .where(and(
-        eq(clients.proId, userResult[0].id),
-        eq(clients.active, true) // Apenas ativos
-      ))
-      .orderBy(desc(clients.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // Buscar clientes ativos
+    const clients = await prisma.client.findMany({
+      where: {
+        nutritionistId: user.id,
+        active: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: skip,
+      include: {
+        _count: {
+          select: {
+            evaluations: {
+              where: { status: 'pending' }
+            }
+          }
+        }
+      }
+    });
+
+    // Calcular próximas avaliações
+    const clientsWithStatus = clients.map(client => {
+      const pendingEvaluations = client._count.evaluations;
+      
+      return {
+        ...client,
+        hasPendingEvaluations: pendingEvaluations > 0,
+        pendingEvaluationsCount: pendingEvaluations
+      };
+    });
 
     return NextResponse.json({ 
-      clients: userClients,
-      pagination: { page, limit, total: userClients.length }
+      clients: clientsWithStatus,
+      pagination: { page, limit, total: clients.length }
     });
 
   } catch (error) {
@@ -86,26 +111,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar ou criar usuário automaticamente (OAuth)
-    let userResult = await db.select()
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
+    // Buscar usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!userResult[0]) {
-      // Criar usuário automaticamente para OAuth
-      const [newUser] = await db.insert(users).values({
-        email: session.user.email,
-        name: session.user.name || null,
-        image: session.user.image || null,
-        role: 'client', // Default seguro
-        emailVerified: new Date()
-      }).returning();
-      userResult = [newUser];
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      );
     }
 
     // Verificar role
-    if (userResult[0].role !== 'nutritionist') {
+    if (user.role !== 'nutritionist') {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas nutricionistas podem gerenciar clientes.' },
         { status: 403 }
@@ -114,18 +133,38 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    // Validar APENAS campos seguros com schema específico
+    // Validar dados
     const validatedData = createClientSchema.parse(body);
 
-    // Inserir no banco com campos controlados pelo servidor
-    const [newClient] = await db.insert(clients)
-      .values({
+    // Verificar se email já existe (se fornecido)
+    if (validatedData.email) {
+      const existingClient = await prisma.client.findFirst({
+        where: {
+          email: validatedData.email,
+          nutritionistId: user.id,
+          active: true
+        }
+      });
+
+      if (existingClient) {
+        return NextResponse.json(
+          { error: 'Já existe um cliente com este email' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Criar cliente
+    const newClient = await prisma.client.create({
+      data: {
         ...validatedData,
-        proId: userResult[0].id, // Definido pelo servidor
-        active: true,            // Sempre ativo na criação
-        // timestamps são automáticos
-      })
-      .returning();
+        nutritionistId: user.id,
+        // Calcular próxima avaliação (15 dias)
+        nextEvaluationDate: validatedData.evaluationType === 'virtual' 
+          ? new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+          : null
+      }
+    });
 
     return NextResponse.json(
       { client: newClient, message: 'Cliente criado com sucesso' },
@@ -135,8 +174,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
     
-    // Tratamento correto de ZodError
-    if (error instanceof ZodError) {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
         { 
           error: 'Dados inválidos', 
