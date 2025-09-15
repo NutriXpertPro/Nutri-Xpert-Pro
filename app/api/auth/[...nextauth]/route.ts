@@ -12,7 +12,7 @@ const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = 'nutritionist' // Default role for now
+        token.role = 'nutritionist'
       }
       return token
     },
@@ -21,17 +21,16 @@ const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role
       }
       return session
-    },
+    }
   },
   pages: {
     signIn: '/login',
-    error: '/auth/error',
+    error: '/auth/error'
   },
   session: {
     strategy: "jwt",
-  },
+  }
 }
 
 const handler = NextAuth(authOptions)
-
 export { handler as GET, handler as POST }
