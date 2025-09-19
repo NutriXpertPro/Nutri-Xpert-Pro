@@ -1,18 +1,17 @@
-import "./styles/globals.css";  // Importando os estilos globais
-import React from "react";  // Importando React
-import Providers from "./providers"; // Provider que inclui Theme e NextAuth
+import "./styles/globals.css";
+import React from "react";
+import Providers from "./providers";
 
-// Exportação do metadata para SEO e informações globais
 export const metadata = {
-  title: "Nutri Xpert Pro",  // Título do site
-  description: "Sistema profissional de gestão nutricional",  // Descrição para SEO
+  title: "Nutri Xpert Pro",
+  description: "Sistema profissional de gestão nutricional",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="h-full">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -29,10 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <link rel="icon" href="/favicon.svg" />
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#00bcd4" />
       </head>
-      <body className="h-full overflow-hidden">
+      <body>
         <Providers>
           {children}
         </Providers>

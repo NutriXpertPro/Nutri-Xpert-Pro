@@ -8,6 +8,14 @@ localPort = 3001
 externalPort = 80
 
 [[ports]]
+localPort = 3002
+externalPort = 3003
+
+[[ports]]
+localPort = 5555
+externalPort = 3002
+
+[[ports]]
 localPort = 37625
 externalPort = 3000
 
@@ -16,7 +24,7 @@ localPort = 42423
 externalPort = 3001
 
 [nix]
-packages = ["lsof", "xorg.xorgserver"]
+packages = ["lsof", "xorg.xorgserver", "tree", "nano"]
 channel = "stable-25_05"
 
 [workflows]

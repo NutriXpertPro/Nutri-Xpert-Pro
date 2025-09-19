@@ -1,14 +1,10 @@
-"use client";  // Este componente precisa ser cliente para usar useState
-
-import React, { useState, useEffect } from "react";  // Importando React, useState e useEffect
+"use client";
+import React, { useState, useEffect } from "react";
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Hook useState para controlar o modo escuro
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  // useEffect para aplicar o tema no body e carregar preferência salva
   useEffect(() => {
-    // Carrega a preferência salva do localStorage
     const savedTheme = localStorage.getItem('nxp-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = savedTheme ? (savedTheme === 'dark') : prefersDark;
@@ -18,30 +14,21 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     document.body.classList.toggle('dark', isDark);
   }, []);
 
-  // Função para alternar entre o modo escuro e o modo claro
   const toggleTheme = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     
-    // Aplica/remove a classe dark no html e body
     document.documentElement.classList.toggle('dark', newDarkMode);
     document.body.classList.toggle('dark', newDarkMode);
     
-    // Salva a preferência no localStorage
     localStorage.setItem('nxp-theme', newDarkMode ? 'dark' : 'light');
   };
 
   return (
     <div className="viewport-container">
-      {/* Header com transparência 40% - Dark: transparente, Light: branco */}
-      <header className={`flex justify-between items-center shrink-0 px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 shadow-sm ${
-        darkMode 
-          ? 'bg-black/40 backdrop-blur-sm' 
-          : 'bg-white/40 backdrop-blur-sm'
-      }`}>
-        {/* Logo em tamanho profissional padrão */}
+      <header className="flex justify-between items-center shrink-0 px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6">
         <img 
-          src="/assets/logo.png" 
+          src="/assets/nutri.png" 
           alt="Logo" 
           className="h-16 w-auto sm:h-20 md:h-24 lg:h-28 xl:h-32 max-w-[200px] sm:max-w-[250px] md:max-w-[300px] lg:max-w-[350px] object-contain"
         />
@@ -52,9 +39,6 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
           {darkMode ? "☀️ Light" : "🌙 Dark"}
         </button>
       </header>
-
-
-      {/* Conteúdo principal - Ocupa resto da viewport */}
       <main className="content-area flex-1 relative z-10">
         <div className="h-full w-full p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
