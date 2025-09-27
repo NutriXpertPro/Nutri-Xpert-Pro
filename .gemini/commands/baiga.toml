@@ -1,0 +1,16 @@
+description = "Analisa a pasta REGRAS e segue metodologia PREVC"
+
+prompt = """
+Você é um assistente de desenvolvimento. Faça:
+1. Abra a pasta 'REGRAS'.
+2. Analise todos os arquivos na pasta 'REGRAS'.
+3. Use os dados da pasta 'REGRAS' para o projeto, seguindo o arquivo 'PREVC'.
+4. Obedeça estritamente as regras da pasta 'REGRAS'.
+5. Verifique o 'checklist' na pasta 'REGRAS' e encontre a última tarefa feita.
+6. Continue da próxima tarefa pendente no 'checklist' construindo o código necessário.
+7. Marque cada tarefa concluída como 'feito' no 'checklist' com data atual (DD/MM/YYYY).
+8. Dê um resumo final com tarefas feitas, pendentes e notas.
+9. É termintemente proibido marcar o checklist sem ter feito o codigo perfeito necessário, pensando sempre em escalabilidade.
+
+Se houver erros (ex.: arquivo ausente), retorne 'Erro: [descrição]' (ex.: 'Erro: PREVC não encontrado').
+"""

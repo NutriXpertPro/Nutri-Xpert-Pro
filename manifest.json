@@ -1,32 +1,89 @@
 {
-  "name": "Nutri Xpert Pro",
+  "name": "NutriXpert Pro - Gestão Nutricional Profissional",
   "short_name": "NutriXpert",
-  "description": "Sistema profissional de gestão nutricional",
-  "start_url": "/",
+  "description": "Aplicativo profissional para nutricionistas: anamnese, dietas, TMB e gestão de pacientes",
+  "start_url": "/?source=pwa",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
-  "theme_color": "#007bff",
-  "orientation": "portrait-primary",
+  "theme_color": "#10b981",
+  "orientation": "any",
+  "categories": ["health", "medical", "productivity", "business"],
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "id": "nutriexpert-pro-v1",
   "icons": [
     {
-      "src": "/icon-192x192.svg",
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png", 
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144", 
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png", 
       "purpose": "maskable any"
     },
     {
-      "src": "/icon-512x512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512", 
+      "type": "image/png",
       "purpose": "maskable any"
     }
   ],
-  "categories": ["health", "productivity", "medical"],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png"
+      "name": "Nova Anamnese",
+      "short_name": "Anamnese",
+      "description": "Criar nova anamnese de paciente",
+      "url": "/anamnesis/new",
+      "icons": [{"src": "/icons/anamnesis-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "Calcular TMB", 
+      "short_name": "TMB",
+      "description": "Calculadora de Taxa Metabólica Basal",
+      "url": "/dashboard/tmb",
+      "icons": [{"src": "/icons/calculator-96x96.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Início", 
+      "description": "Painel principal do nutricionista",
+      "url": "/dashboard",
+      "icons": [{"src": "/icons/dashboard-96x96.png", "sizes": "96x96"}]
     }
-  ]
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

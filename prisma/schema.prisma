@@ -1,0 +1,430 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  CLIENT
+  NUTRITIONIST
+}
+
+enum EvaluationStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+}
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+  FACEBOOK
+}
+
+// ================================
+// NEXTAUTH.JS MODELS
+// ================================
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?
+  image         String?
+  role          Role           @default(CLIENT)
+  provider      AuthProvider   @default(CREDENTIALS)
+  emailVerified DateTime?
+
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Stripe Subscription fields
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
+  stripePriceId          String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+  isPro                  Boolean   @default(false) @map("is_pro")
+
+  @@index([role])
+  @@index([provider])
+
+  clients       Client[]       @relation("NutritionistClients")
+  notifications Notification[]
+  diets         Diet[]
+  mealPlans     MealPlan[]
+  reports       Report[]
+  nutritionistAppointments Appointment[] @relation("NutritionistAppointments")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ================================
+// APP MODELS
+// ================================
+
+model Client {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String?
+  phone               String?
+  birthDate           DateTime?
+  age                 Int?
+  sex                 String?
+  profession          String?
+  notes               String?
+  active              Boolean   @default(true)
+  evaluationType      String    @default("virtual")
+  nextEvaluationDate  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  nutritionistId String
+  nutritionist   User   @relation("NutritionistClients", fields: [nutritionistId], references: [id])
+
+  @@index([nutritionistId])
+  @@index([active])
+  @@index([nextEvaluationDate])
+
+  anamnesis     Anamnesis[]
+  evaluations   Evaluation[]
+  diets         Diet[]
+  notifications Notification[]
+  reports       Report[]
+  anamnesisLinks AnamnesisLink[] // Adicionado para o relacionamento inverso
+  evaluationLinks EvaluationLink[] // Adicionado para o relacionamento inverso
+  appointments    Appointment[]    @relation("ClientAppointments")
+
+  @@map("clients")
+}
+
+model Anamnesis {
+  id                  String    @id @default(cuid())
+  clientId            String    @unique
+  client              Client    @relation(fields: [clientId], references: [id])
+
+  wakeTime            String?
+  sleepTime           String?
+  sleepDifficulty     String?
+  trainTime           String?
+  trainDuration       Int?
+  trainDays           String?
+
+  weight              Float?
+  height              Float?
+  weightTrend         String?
+
+  restrictedFoods     String?
+  previousDiet        String?
+  dietResult          String?
+  intestineFunction   String?
+  daysWithoutBathroom Int?
+  bathroomFrequency   Int?
+  waterIntake         Float?
+  sweetCravings       Int?      @default(5)
+  hungerTimes         String?
+  snackPreference     String?
+  favoriteFruits      String?
+
+  familyHistory           String?
+  healthProblems          String?
+  healthProblemsDetails   String?
+  jointProblems           String?
+  medications             String?
+  medicationsDetails      String?
+  smoking                 String?
+  medicationIntolerance   String?
+  intoleranceDetails      String?
+  contraceptive           String?
+  thermogenics            String?
+  alcohol                 String?
+  alcoholFrequency        Int?
+  anabolics               String?
+  anabolicsProblems       String?
+  futureAnabolics         String?
+
+  goal                  String?
+  commitment            String?
+
+  neck                  Float?
+  waist                 Float?
+  hip                   Float?
+
+  foto_frente           String? // Adicionado para armazenar a URL da foto frontal
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  photos                Photo[]
+
+  @@map("anamnesis")
+}
+
+model Evaluation {
+  id            String           @id @default(cuid())
+  clientId      String
+  client        Client           @relation(fields: [clientId], references: [id])
+
+  weight        Float?
+  neck          Float?
+  waist         Float?
+  hip           Float?
+
+  bodyFatPercentage Float?
+
+  type          String           @default("quinzenal")
+  status        EvaluationStatus @default(PENDING)
+  dueDate       DateTime
+  completedAt   DateTime?
+  notes         String?
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+
+  photos Photo[]
+  evaluationLink EvaluationLink?
+
+  @@map("evaluations")
+}
+
+model Photo {
+  id            String @id @default(cuid())
+  type          String
+  url           String
+
+  anamnesisId   String?
+  anamnesis     Anamnesis? @relation(fields: [anamnesisId], references: [id])
+  evaluationId  String?
+  evaluation    Evaluation? @relation(fields: [evaluationId], references: [id])
+
+  createdAt     DateTime @default(now())
+
+  @@map("photos")
+}
+
+model Food {
+  id            String  @id @default(cuid())
+  name          String
+  category      String
+
+  calories      Float?
+  protein       Float?
+  carbohydrates Float?
+  fat           Float?
+  fiber         Float?
+  sodium        Float?
+
+  calcium       Float?
+  iron          Float?
+  magnesium     Float?
+  phosphorus    Float?
+  potassium     Float?
+  zinc          Float?
+
+  vitaminA      Float?
+  vitaminB1     Float?
+  vitaminB2     Float?
+  vitaminB3     Float?
+  vitaminB6     Float?
+  vitaminB12    Float?
+  vitaminC      Float?
+  vitaminD      Float?
+  vitaminE      Float?
+  folate        Float?
+
+  active        Boolean @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("foods")
+}
+
+model Diet {
+  id            String @id @default(cuid())
+  clientId      String
+  client        Client @relation(fields: [clientId], references: [id])
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+
+  name          String
+  description   String?
+  totalCalories Float?
+  totalProtein  Float?
+  totalCarbs    Float?
+  totalFat      Float?
+
+  type          DietType @default(OMNIVORO) // New field for diet type
+  mealStructure Json?
+
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("diets")
+}
+
+model MealPlan {
+  id            String @id @default(cuid())
+  nutritionistId String?
+  nutritionist   User?  @relation(fields: [nutritionistId], references: [id])
+
+  name          String
+  description   String?
+  mealType      String
+  calories      Float?
+  protein       Float?
+  carbs         Float?
+  fat           Float?
+
+  ingredients   Json?
+  instructions  String?
+  tags          Json?
+
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("meal_plans")
+}
+
+model Notification {
+  id            String @id @default(cuid())
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+  clientId      String?
+  client        Client? @relation(fields: [clientId], references: [id])
+
+  type          String
+  title         String
+  message       String
+  read          Boolean  @default(false)
+  actionUrl     String?
+
+  createdAt     DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model Report {
+  id            String @id @default(cuid())
+  clientId      String
+  client        Client @relation(fields: [clientId], references: [id])
+  nutritionistId String
+  nutritionist   User   @relation(fields: [nutritionistId], references: [id])
+
+  type          String
+  title         String
+  content       Json?
+  pdfUrl        String?
+
+  generatedAt   DateTime @default(now())
+
+  @@map("reports")
+}
+
+model AnamnesisLink {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EvaluationLink {
+  id           String    @id @default(uuid())
+  token        String    @unique
+  clientId     String
+  client       Client    @relation(fields: [clientId], references: [id])
+  evaluationId String? @unique   // Optional, if link is for a new evaluation
+  evaluation   Evaluation? @relation(fields: [evaluationId], references: [id])
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+enum AppointmentType {
+  PRESENTIAL
+  ONLINE
+}
+
+enum DietType {
+  VEGETARIANO
+  VEGANO
+  OMNIVORO
+  JEJUM_INTERMITENTE
+  CETOGENICA
+  BAIXO_CARBOIDRATO
+  ALTO_PROTEINA
+  MEDITERRANEA
+  SEM_GLUTEN
+  SEM_LACTOSE
+}
+
+model Appointment {
+  id             String          @id @default(cuid())
+  date           DateTime
+  type           AppointmentType
+  notes          String?
+  
+  clientId       String
+  client         Client          @relation("ClientAppointments", fields: [clientId], references: [id])
+
+  nutritionistId String
+  nutritionist   User            @relation("NutritionistAppointments", fields: [nutritionistId], references: [id])
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("appointments")
+}

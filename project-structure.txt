@@ -1,0 +1,125 @@
+.
+├── app
+│   ├── anamnesis
+│   │   ├── [id]
+│   │   │   └── page.tsx
+│   │   └── success
+│   │       └── page.tsx
+│   ├── api
+│   │   ├── anamnesis
+│   │   │   └── create
+│   │   ├── auth
+│   │   │   ├── login.ts
+│   │   │   ├── [...nextauth]
+│   │   │   └── register.ts
+│   │   ├── clients
+│   │   │   └── [id]
+│   │   ├── evaluations
+│   │   ├── models
+│   │   ├── patients
+│   │   ├── routes
+│   │   │   ├── clients.ts
+│   │   │   ├── evaluations.ts
+│   │   │   ├── health.ts
+│   │   │   └── patients.ts
+│   │   └── services
+│   │       └── testConnection.js
+│   ├── components
+│   │   └── ThemeProvider.tsx
+│   ├── dashboard
+│   │   ├── clients
+│   │   │   └── page.tsx
+│   │   └── page.tsx
+│   ├── layout.tsx
+│   ├── lib
+│   │   ├── auth.ts
+│   │   ├── calculations.ts
+│   │   ├── prisma.ts
+│   │   ├── server
+│   │   │   ├── db.ts
+│   │   │   ├── index.ts
+│   │   │   ├── routes.ts
+│   │   │   ├── storage.ts
+│   │   │   └── vite.ts
+│   │   ├── supabase.ts
+│   │   └── utils.ts
+│   ├── login
+│   │   ├── nutritionist
+│   │   │   └── page.tsx
+│   │   ├── page.tsx
+│   │   └── patient
+│   │       └── page.tsx
+│   ├── offline
+│   │   └── page.tsx
+│   ├── page.tsx
+│   ├── providers.tsx
+│   ├── styles
+│   │   └── globals.css
+│   └── testes
+│       └── pages.tsx
+├── attached_assets
+├── components
+│   ├── layout.tsx
+│   └── ui
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── checkbox.tsx
+│       ├── input.tsx
+│       ├── label.tsx
+│       ├── radio-group.tsx
+│       ├── select.tsx
+│       ├── slider.tsx
+│       ├── textarea.tsx
+│       └── toggle.theme.tsx
+├── components.json
+├── docs
+│   ├── fluxograma
+│   ├── plan.md
+│   ├── prd.md
+│   └── prevc.md
+├── lib
+│   └── auth.ts
+├── manifest.json
+├── middleware.ts
+├── migrations
+│   ├── 0000_pink_tomorrow_man.sql
+│   └── meta
+│       ├── 0000_snapshot.json
+│       └── _journal.json
+├── next.config.js
+├── next-env.d.ts
+├── package.json
+├── package-lock.json
+├── postcss.config.js
+├── prisma
+│   └── schema.prisma
+├── project-structure.txt
+├── projeto
+│   ├── assets
+│   │   └── imagens.txt
+│   ├── docs
+│   │   └── introducao.txt
+│   └── src
+│       └── main.txt
+├── public
+│   ├── assets
+│   │   ├── background-light.png
+│   │   ├── background.png
+│   │   ├── logo.png
+│   │   └── nutri.png
+│   ├── favicon.svg
+│   ├── icon-192x192.svg
+│   ├── icon-512x512.svg
+│   ├── icons
+│   │   ├── icon-192x192.svg
+│   │   └── icon-512x512.svg
+│   └── manifest.json
+├── replit.md
+├── scripts
+│   └── generate-icons.js
+├── shared
+├── sw.js
+├── tailwind.config.ts
+└── tsconfig.json
+
+45 directories, 78 files
