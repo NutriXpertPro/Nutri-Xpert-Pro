@@ -31,7 +31,7 @@ export default function NutritionistLogin() {
   };
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+    signIn("google", {});
   };
 
   const handleFacebookLogin = () => {
@@ -39,7 +39,7 @@ export default function NutritionistLogin() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center py-12">
+    <div className="min-h-screen flex justify-center py-6">
       <LoginForm
         onSubmit={onSubmit}
         isLoading={isLoading}

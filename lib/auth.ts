@@ -17,7 +17,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         // Buscar role do usuário no banco se não estiver presente
-        if (!user.role && user.email) {
+        if (account?.provider === 'google') {
+          token.role = 'NUTRITIONIST'; // Temporary: Always assign 'NUTRITIONIST' for Google logins
+        } else if (!user.role && user.email) {
           const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
           token.role = dbUser?.role || 'CLIENT';
         } else {
@@ -32,6 +34,10 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Always redirect to the dashboard after successful login
+      return baseUrl + '/dashboard';
     },
   },
   pages: {
