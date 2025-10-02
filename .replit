@@ -12,12 +12,20 @@ localPort = 3002
 externalPort = 3003
 
 [[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
 localPort = 5555
 externalPort = 3002
 
 [[ports]]
 localPort = 37625
 externalPort = 3000
+
+[[ports]]
+localPort = 38833
+externalPort = 4200
 
 [[ports]]
 localPort = 42423
@@ -49,7 +57,7 @@ outputType = "webview"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 3001
+waitForPort = 5000
 
 [agent]
 expertMode = true

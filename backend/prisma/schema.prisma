@@ -25,6 +25,13 @@ enum AuthProvider {
   FACEBOOK
 }
 
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  CANCELLED
+}
+
 // ================================
 // NEXTAUTH.JS MODELS
 // ================================
@@ -46,11 +53,15 @@ model User {
   updatedAt     DateTime       @updatedAt
 
   // Stripe Subscription fields
-  stripeCustomerId       String?   @unique @map("stripe_customer_id")
-  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
-  stripePriceId          String?   @map("stripe_price_id")
-  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
-  isPro                  Boolean   @default(false) @map("is_pro")
+  stripeCustomerId       String?              @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?              @unique @map("stripe_subscription_id")
+  stripePriceId          String?              @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime?            @map("stripe_current_period_end")
+  isPro                  Boolean              @default(false) @map("is_pro")
+  subscriptionStatus     SubscriptionStatus?  @default(PENDING) @map("subscription_status")
+  approvedAt             DateTime?            @map("approved_at")
+  rejectedAt             DateTime?            @map("rejected_at")
+  rejectionReason        String?              @map("rejection_reason")
 
   @@index([role])
   @@index([provider])

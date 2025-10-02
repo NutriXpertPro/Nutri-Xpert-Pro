@@ -1,9 +1,9 @@
 // app/layout.tsx
 import './styles/globals.css';
 import React from 'react';
-import Providers from './providers'; // Import the Providers component
-import { getServerSession } from 'next-auth/next'; // Import getServerSession corretamente
-import { authOptions } from '../../backend/lib/auth'; // Import authOptions
+import Providers from './providers';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/backend/lib/auth';
 
 export const metadata = {
   title: 'Nutri Xpert Pro',

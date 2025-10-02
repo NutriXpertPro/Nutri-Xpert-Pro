@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -H 0.0.0.0 -p 5000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0 -p 5000",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate"

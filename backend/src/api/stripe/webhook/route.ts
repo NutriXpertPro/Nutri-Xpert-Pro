@@ -31,17 +31,42 @@ export async function POST(req: NextRequest) {
 
       if (subscriptionId && customerId && userId) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true }
+        });
+
+        const updateData: any = {
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscription.id,
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        };
+
+        if (user?.role === 'NUTRITIONIST') {
+          updateData.subscriptionStatus = 'PENDING';
+          updateData.isPro = false;
+        } else {
+          updateData.isPro = true;
+        }
 
         await prisma.user.update({
           where: { id: userId },
-          data: {
-            stripeCustomerId: customerId,
-            stripeSubscriptionId: subscription.id,
-            stripePriceId: subscription.items.data[0].price.id,
-            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            isPro: true,
-          },
+          data: updateData,
         });
+
+        if (user?.role === 'NUTRITIONIST') {
+          await prisma.notification.create({
+            data: {
+              nutritionistId: userId,
+              type: 'SUBSCRIPTION',
+              title: 'Pagamento Recebido',
+              message: 'Seu pagamento foi confirmado. Aguarde aprovação do cadastro para acessar todas as funcionalidades.',
+              read: false,
+            },
+          });
+        }
       }
       break;
     case 'invoice.payment_succeeded':
