@@ -13,25 +13,45 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account, profile }) {
-      // Se o usuário está logando via Google, buscar no banco o role
       if (user) {
         token.id = user.id;
-        // Buscar role do usuário no banco se não estiver presente
+        
         if (account?.provider === 'google') {
-          token.role = 'NUTRITIONIST'; // Temporary: Always assign 'NUTRITIONIST' for Google logins
+          token.role = 'NUTRITIONIST';
         } else if (!user.role && user.email) {
-          const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+          const dbUser = await prisma.user.findUnique({ 
+            where: { email: user.email },
+            select: { role: true, isPro: true, subscriptionStatus: true }
+          });
           token.role = dbUser?.role || 'CLIENT';
+          token.isPro = dbUser?.isPro || false;
+          token.subscriptionStatus = dbUser?.subscriptionStatus;
         } else {
           token.role = (user as any).role;
+          token.isPro = (user as any).isPro || false;
+          token.subscriptionStatus = (user as any).subscriptionStatus;
         }
       }
+      
+      if (token.id && token.role === 'NUTRITIONIST') {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isPro: true, subscriptionStatus: true }
+        });
+        if (dbUser) {
+          token.isPro = dbUser.isPro;
+          token.subscriptionStatus = dbUser.subscriptionStatus;
+        }
+      }
+      
       return token;
     },
     session({ session, token }) {
       if (session.user && token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        (session.user as any).isPro = token.isPro;
+        (session.user as any).subscriptionStatus = token.subscriptionStatus;
       }
       return session;
     },
