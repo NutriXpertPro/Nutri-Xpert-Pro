@@ -90,12 +90,52 @@ export async function POST(req: NextRequest) {
       const failedSubscriptionId = failedInvoice.subscription as string;
 
       if (failedSubscriptionId) {
-        await prisma.user.update({
+        const user = await prisma.user.findUnique({
           where: { stripeSubscriptionId: failedSubscriptionId },
-          data: {
-            isPro: false, // Revoke access on payment failure
-          },
         });
+
+        if (user) {
+          await prisma.user.update({
+            where: { stripeSubscriptionId: failedSubscriptionId },
+            data: {
+              isPro: false,
+            },
+          });
+
+          await prisma.notification.create({
+            data: {
+              nutritionistId: user.id,
+              type: 'SUBSCRIPTION',
+              title: 'Falha no Pagamento',
+              message: 'Houve uma falha no processamento do seu pagamento. Por favor, atualize seus dados de pagamento para continuar usando a plataforma.',
+              read: false,
+            },
+          });
+
+          if (user.email) {
+            const { sendEmail } = await import('@/app/lib/sendgrid');
+            await sendEmail({
+              to: user.email,
+              from: process.env.SENDGRID_FROM_EMAIL || 'noreply@nutriexpertpro.com',
+              subject: 'Falha no Pagamento - Nutri Xpert Pro',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #ef4444;">Falha no Pagamento</h2>
+                  <p>Olá ${user.name || 'Nutricionista'},</p>
+                  <p>Infelizmente, houve uma falha no processamento do seu último pagamento.</p>
+                  <p>Seu acesso à plataforma foi temporariamente suspenso. Para reativar, por favor atualize seus dados de pagamento.</p>
+                  <p>
+                    <a href="${process.env.NEXTAUTH_URL}/assinatura" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">
+                      Atualizar Pagamento
+                    </a>
+                  </p>
+                  <p>Se você tiver dúvidas, entre em contato com nosso suporte.</p>
+                  <p>Atenciosamente,<br>Equipe Nutri Xpert Pro</p>
+                </div>
+              `,
+            });
+          }
+        }
       }
       break;
     case 'customer.subscription.deleted':
