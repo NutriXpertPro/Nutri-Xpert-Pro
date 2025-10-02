@@ -1,7 +1,9 @@
 modules = ["nodejs-20", "postgresql-16"]
 
 [deployment]
-run = ["npm", "run", "dev"]
+run = ["npm", "start"]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
 
 [[ports]]
 localPort = 3001
