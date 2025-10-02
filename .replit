@@ -50,3 +50,6 @@ outputType = "webview"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 3001
+
+[agent]
+expertMode = true
