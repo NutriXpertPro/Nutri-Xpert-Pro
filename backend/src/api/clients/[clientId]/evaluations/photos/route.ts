@@ -1,5 +1,5 @@
 // app/api/clients/[clientId]/evaluations/photos/route.ts
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/backend/lib/prisma';
 import { getAuthSession } from '@/backend/lib/auth';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { clientId: string } }
 ) {
   try {
-    const session = await auth();
+    const session = await getAuthSession();
     if (!session || !session.user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }

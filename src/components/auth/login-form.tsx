@@ -33,7 +33,7 @@ interface LoginFormProps {
   onSubmit: (values: z.infer<typeof formSchema>) => void; // Removido Promise<void> para compatibilidade com handleSubmit
   isLoading: boolean;
   onGoogleLogin?: () => void;
-
+  onFacebookLogin?: () => void;
   onWebAuthnLogin?: () => void;
   showTwoFactorInput?: boolean;
 }
