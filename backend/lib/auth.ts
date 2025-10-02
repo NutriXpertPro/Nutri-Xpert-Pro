@@ -1,7 +1,8 @@
-import { NextAuthOptions, getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/backend/lib/prisma"
+import type { NextAuthOptions } from "next-auth"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -12,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile }: any) {
       if (user) {
         token.id = user.id;
         
@@ -46,7 +47,7 @@ export const authOptions: NextAuthOptions = {
       
       return token;
     },
-    session({ session, token }) {
+    session({ session, token }: any) {
       if (session.user && token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
@@ -55,7 +56,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl }: any) {
       // Always redirect to the dashboard after successful login
       return baseUrl + '/dashboard';
     },
